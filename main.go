@@ -34,15 +34,18 @@ var (
 )
 
 const (
-	OptionReadOnly    = 0
+	//OptionReadOnly makes sets the read attribute to true and write to false
+	OptionReadOnly = 0
+	//OptionDisalowRead will disalow the reading of a file or directory
 	OptionDisalowRead = 1
 )
 
+//Option is a type for assigning node options such as readonly or deny read
 type Option int
 
-//NewRamFS create a new memory based file system
-func NewRamFS(options ...Option) RamFileSystem {
-	fs := RamFileSystem{
+//NewRAMFS create a new memory based file system
+func NewRAMFS(options ...Option) RAMFileSystem {
+	fs := RAMFileSystem{
 		directories: make(map[string]*Directory),
 	}
 
@@ -78,14 +81,12 @@ func NewRamFS(options ...Option) RamFileSystem {
 	return fs
 }
 
-//Get 	/root/users/admin
-//			/logs
-//			/downloads
-
-type RamFileSystem struct {
+//RAMFileSystem is the object which holds the whole filesystem
+type RAMFileSystem struct {
 	directories map[string]*Directory
 }
 
+//Directory is a type which contains references to subdirectories but holds files exclusively within it's property
 type Directory struct {
 	Name string
 
@@ -99,6 +100,7 @@ type Directory struct {
 	Modified int64
 }
 
+//File holds the content and metadata within this memory memory space
 type File struct {
 	Name string
 
@@ -111,7 +113,8 @@ type File struct {
 	Modified int64
 }
 
-func (fs *RamFileSystem) WriteFile(path string, content []byte) error {
+//WriteFile takes in a path then checks the permissons then writes the content provided into memory
+func (fs *RAMFileSystem) WriteFile(path string, content []byte) error {
 
 	nodePath := strings.Split(cleanPath(path)[1:], "/")
 	parent, ok := fs.directories[getParent(nodePath)]
@@ -155,7 +158,8 @@ func (fs *RamFileSystem) WriteFile(path string, content []byte) error {
 
 }
 
-func (fs *RamFileSystem) FileGetContents(path string) ([]byte, error) {
+//FileGetContents will check the read permission the proceed to either deny access or return the contents
+func (fs *RAMFileSystem) FileGetContents(path string) ([]byte, error) {
 
 	nodePath := strings.Split(cleanPath(path)[1:], "/")
 	parent, ok := fs.directories[getParent(nodePath)]
@@ -182,7 +186,8 @@ func (fs *RamFileSystem) FileGetContents(path string) ([]byte, error) {
 
 }
 
-func (fs *RamFileSystem) Mkdir(path string) error {
+//Mkdir creates a directory within its parent, write permission are checked
+func (fs *RAMFileSystem) Mkdir(path string) error {
 
 	if path == "/" {
 		return ErrorsNoParentDirectory
@@ -232,7 +237,8 @@ func (fs *RamFileSystem) Mkdir(path string) error {
 	return nil
 }
 
-func (fs *RamFileSystem) Ls(path string) ([]*File, []*Directory, error) {
+//Ls will return a list of files and directories within a given path after checking the permissions
+func (fs *RAMFileSystem) Ls(path string) ([]*File, []*Directory, error) {
 	dir, err := fs.getDir(path)
 	if err != nil {
 		return nil, nil, err
@@ -241,7 +247,7 @@ func (fs *RamFileSystem) Ls(path string) ([]*File, []*Directory, error) {
 	return dir.Files, dir.Directories, nil
 }
 
-func (fs *RamFileSystem) getDir(path string) (*Directory, error) {
+func (fs *RAMFileSystem) getDir(path string) (*Directory, error) {
 
 	dir, ok := fs.directories[path]
 	if ok != true {
