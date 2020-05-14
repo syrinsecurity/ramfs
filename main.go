@@ -1,4 +1,4 @@
-package main
+package ramfs
 
 import (
 	"errors"
@@ -43,8 +43,8 @@ const (
 //Option is a type for assigning node options such as readonly or deny read
 type Option int
 
-//NewRAMFS create a new memory based file system
-func NewRAMFS(options ...Option) RAMFileSystem {
+//New create a new memory based file system
+func New(options ...Option) RAMFileSystem {
 	fs := RAMFileSystem{
 		directories: make(map[string]*Directory),
 	}
@@ -183,6 +183,70 @@ func (fs *RAMFileSystem) FileGetContents(path string) ([]byte, error) {
 	}
 
 	return nil, ErrorsFileNotFound
+
+}
+
+//Rm removes a file or directory. To remove a directory it must end in a trailing slash e.g. "/path/to/my/folder/"
+func (fs *RAMFileSystem) Rm(path string) error {
+
+	nodePath := strings.Split(cleanPath(path)[1:], "/")
+
+	if path[len(path)-1] == '/' {
+
+		node, ok := fs.directories[cleanPath(path)]
+		if ok != true {
+			return ErrorsDirectoryNotFound
+		}
+
+		if node.Write == false {
+			return ErrorsNoWritePermission
+		}
+
+		parent, ok := fs.directories[getParent(nodePath)]
+		if ok != true {
+			return ErrorsDirectoryNotFound
+		}
+
+		var dirFolders []*Directory
+		for _, dir := range parent.Directories {
+			if dir.Name == nodePath[len(nodePath)-1] {
+
+				if dir.Write == false {
+					return ErrorsNoWritePermission
+				}
+
+				delete(fs.directories, path)
+
+				continue
+			}
+
+			dirFolders = append(dirFolders, dir)
+		}
+
+		parent.Directories = dirFolders
+
+		return nil
+	}
+
+	parent, ok := fs.directories[getParent(nodePath)]
+	if ok != true {
+		return ErrorsFileNotFound
+	}
+
+	var parentFiles []*File
+	for _, file := range parent.Files {
+		if file.Name == nodePath[len(nodePath)-1] {
+			if file.Write == false {
+				return ErrorsNoWritePermission
+			}
+		}
+
+		parentFiles = append(parentFiles, file)
+	}
+
+	parent.Files = parentFiles
+
+	return nil
 
 }
 
