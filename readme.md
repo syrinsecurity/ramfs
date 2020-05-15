@@ -1,6 +1,6 @@
 # RAMFS
 
-RAMFS is a in memory file system which has the capability of creating and removing directories and files. Files can be written to and read from but also read/write permissions can be set in order to protect the filesystem if desired.
+RAMFS is a in memory file system which has the capability of creating and removing directories and files. Files can be written to and read from but also read/write permissions can be set in order to protect the filesystem if desired.  A hashmap is used for ultra fast directory lookups and memory pointers are used to minimise copying memory inturn resulting in less memory overhead and faster reads/writes.
 
 ## Install
 
